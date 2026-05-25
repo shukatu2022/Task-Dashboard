@@ -1,65 +1,113 @@
-import Image from "next/image";
+"use client"; // ← これが重要！「画面を動かす」宣言です
+
+import { useState, useEffect} from "react";
+import { Task } from "@/types"; // index.tsを作ったのでこのように書けます
+                                // @/は一番上の階層を指すエイリアス　
+                                // 問題があれば../typesと書いてもOK
 
 export default function Home() {
+  // 1. タスク一覧を管理する「状態(state)」
+  // const [tasks, setTasks] = useState<Task[]>([
+  //   { id: "1", title: "Next.jsの基礎を学ぶ", isCompleted: true },
+  // ]);
+  const [tasks, setTasks] = useState<Task[]>([]); // 最初は空のリスト
+
+  // 2. 入力フォームの文字を管理する「状態(state)」
+  const [inputValue, setInputValue] = useState("");
+
+  // 画面がブラウザで読み込まれたか（マウントされたか）を判定する状態
+  const [isMounted, setIsMounted] = useState(false);
+
+  // 【追加1】 最初の1回だけ実行：ローカルストレージからタスクを読み込む
+  useEffect(() => {
+    const savedTasks = localStorage.getItem("tasks");
+    if (savedTasks) {
+      setTasks(JSON.parse(savedTasks)); // 文字列を配列（オブジェクト）に戻す
+    }
+    setIsMounted(true); // 読み込み完了フラグを立てる
+  }, []); // ← 最後が [] なので、画面表示時の1回だけ動きます
+
+  // 【追加2】 タスクが変化するたびに実行：ローカルストレージに保存する
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("tasks", JSON.stringify(tasks)); // 配列を文字列にして保存
+    }
+  }, [tasks, isMounted]); // ← tasksかisMountedが変化するたびに動きます
+
+  // 3. タスクを追加する関数
+  const addTask = () => {
+    if (inputValue.trim() === "") return; // 空入力防止
+
+    const newTask: Task = {
+      id: crypto.randomUUID(), // ランダムなIDを生成
+      title: inputValue,
+      isCompleted: false,
+    };
+
+    setTasks([...tasks, newTask]); // 今のリストに新しいタスクを合体
+    setInputValue(""); // 入力欄を空にする
+  };
+
+  // 4. タスクを削除する関数
+  const deleteTask = (id: string) => {
+    // 指定されたID「以外」のタスクを残すことで削除を実現する
+    const newTasks = tasks.filter((task) => task.id !== id);
+    setTasks(newTasks);
+  };
+
+  // 【追加3】 Hydration（ハイドレーション）エラーを防ぐためのおまじない
+  // ブラウザでの読み込みが完了するまでは何も表示しない
+  if (!isMounted) {
+    return null; 
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="p-8 max-w-2xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-blue-600">Task Dashboard</h1>
+
+      {/* 入力エリア */}
+      <div className="flex gap-2 mb-8">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="新しいタスクを入力..."
+          className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        <button
+          onClick={addTask}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          追加
+        </button>
+      </div>
+
+      {/* タスク一覧 */}
+      <div className="space-y-3">
+        {tasks.map((task) => (
+          <div key={task.id} className="flex items-center p-4 border rounded-lg bg-white shadow-sm">
+            <input
+              type="checkbox"
+              checked={task.isCompleted}
+              onChange={() => {
+                // 完了状態を切り替える処理
+                setTasks(tasks.map(t => t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t));
+              }}
+              className="mr-4 h-5 w-5 cursor-pointer"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <span className={`text-black ${task.isCompleted ? "line-through text-gray-400" : ""}`}>
+              {task.title}
+            </span>
+
+            <button
+              onClick={() => deleteTask(task.id)}
+              className="ml-auto px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition"
+            >
+              削除
+            </button>
+          </div>
+        ))}
+      </div>
+    </main>
   );
 }
