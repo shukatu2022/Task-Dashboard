@@ -4,6 +4,7 @@ import { useState, useEffect} from "react";
 import { Task } from "@/types"; // index.tsを作ったのでこのように書けます
                                 // @/は一番上の階層を指すエイリアス　
                                 // 問題があれば../typesと書いてもOK
+import { auth, signIn, signOut } from "@/auth";
 
 export default function Home() {
   // 1. タスク一覧を管理する「状態(state)」
