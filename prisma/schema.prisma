@@ -6,10 +6,12 @@
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
+  engineType = "binary"
 }
 
 // --- Auth.js 認証に必要なモデル ---
