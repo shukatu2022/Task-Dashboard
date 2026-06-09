@@ -5,6 +5,7 @@ import { Task } from "@/types"; // index.tsを作ったのでこのように書�
                                 // @/は一番上の階層を指すエイリアス　
                                 // 問題があれば../typesと書いてもOK
 import { auth, signIn, signOut } from "@/auth";
+import { handleSignIn, handleSignOut } from "@/app/actions";
 
 export default async function Home() {
   // 1. タスク一覧を管理する「状態(state)」
@@ -67,7 +68,7 @@ export default async function Home() {
 
   return (
     <main className="p-8 max-w-2xl mx-auto">
-      {/* ヘッダーエリア（ログイン状態に応じて表示を切り替え） */}
+      {/* ヘッダーエリア */}
       <div className="flex justify-between items-center mb-8 pb-4 border-b">
         <div>
           <h1 className="text-3xl font-bold text-blue-600">Task Dashboard</h1>
@@ -88,13 +89,9 @@ export default async function Home() {
               <p className="text-xs text-gray-400">{session.user?.email}</p>
             </div>
             
-            <form
-              action={async () => {
-                "use server";
-                await signOut();
-              }}
-            >
-              <button className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition">
+            {/* ログアウトボタン（actionをシンプルな関数呼び出しに） */}
+            <form action={handleSignOut}>
+              <button type="submit" className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition">
                 ログアウト
               </button>
             </form>
@@ -130,7 +127,6 @@ export default async function Home() {
                   type="checkbox"
                   checked={task.isCompleted}
                   onChange={() => {
-                    // 完了状態を切り替える処理
                     setTasks(tasks.map(t => t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t));
                   }}
                   className="mr-4 h-5 w-5 cursor-pointer"
@@ -150,19 +146,14 @@ export default async function Home() {
           </div>
         </>
       ) : (
-        /* 未ログイン時のログイン誘導カード（元デザインのテイストに調整） */
+        /* 未ログイン時 */
         <div className="text-center py-12 px-4 border rounded-2xl bg-gray-50 shadow-sm">
           <p className="text-gray-600 mb-6 font-medium">
             タスクを管理するにはログインが必要です。
           </p>
-          <form
-            action={async () => {
-              "use server";
-              await signIn("github");
-            }}
-          >
-            <button className="inline-flex items-center gap-2 px-6 py-3 bg-[#24292e] hover:bg-black text-white font-medium rounded-xl shadow transition">
-              {/* 簡易的なGitHubアイコン（お好みでReact Iconsなどに差し替え可能） */}
+          {/* ログインボタン（actionをシンプルな関数呼び出しに） */}
+          <form action={handleSignIn}>
+            <button type="submit" className="inline-flex items-center gap-2 px-6 py-3 bg-[#24292e] hover:bg-black text-white font-medium rounded-xl shadow transition">
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                 <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-1.99 1.03-2.69-.1-.25-.45-1.29.1-2.65 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.36.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.69 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
               </svg>
