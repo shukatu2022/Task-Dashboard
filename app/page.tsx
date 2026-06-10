@@ -6,6 +6,8 @@ import { Task } from "@/types"; // index.tsを作ったのでこのように書�
                                 // 問題があれば../typesと書いてもOK
 import { auth, signIn, signOut } from "@/auth";
 import { handleSignIn, handleSignOut } from "@/app/actions";
+import { useSession } from "next-auth/react";
+
 
 export default async function Home() {
   // 1. タスク一覧を管理する「状態(state)」
@@ -63,7 +65,7 @@ export default async function Home() {
     return null; 
   }
 
-  const session = await auth();
+  const { data: session } = useSession();
 
 
   return (
