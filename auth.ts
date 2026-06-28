@@ -12,4 +12,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   // セッションの管理方法（JWTトークンを使用）
   session: { strategy: "jwt" },
+  callbacks: {
+    session({ session, token }) {
+      // JWTのidをsession.user.idに追加
+      if (token.sub) session.user.id = token.sub;
+      return session;
+    },
+  },
 });
