@@ -17,6 +17,7 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
   const [inputValue, setInputValue] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true); // 読み込み中の状態管理
+  const [dueDateValue, setDueDateValue] = useState(""); // 日付入力用
 
   // -----------------------------------------------
   // ページ読み込み時にタスク一覧を取得
@@ -48,10 +49,18 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
   const addTask = async () => {
     if (!inputValue.trim()) return;
 
+    // dueDate が空なら undefined を送る（または送らない）
+    const body: { title: string; dueDate?: string } = {
+      title: inputValue,
+    };
+    if (dueDateValue.trim()) {
+      body.dueDate = dueDateValue;
+    }
+
     const res = await fetch("/api/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: inputValue }),
+      body: JSON.stringify(body),
     });
 
     if (res.status === 401) {
@@ -65,6 +74,7 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
     // 画面のタスク一覧に追加
     setTasks([newTask, ...tasks]);
     setInputValue("");
+    setDueDateValue(""); // 日付入力欄もクリア
   };
 
   // -----------------------------------------------
@@ -143,7 +153,7 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
       </div>
 
       {/* 2. 入力エリア */}
-      <div className="flex gap-2 mb-8">
+      <div className="flex flex-col sm:flex-row gap-2 mb-8">
         <input
           type="text"
           value={inputValue}
@@ -151,6 +161,12 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
           onKeyDown={handleKeyDown}
           placeholder="新しいタスクを入力..."
           className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
+        />
+        <input
+          type="date"
+          value={dueDateValue}
+          onChange={(e) => setDueDateValue(e.target.value)}
+          className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
         />
         <button
           onClick={addTask}
