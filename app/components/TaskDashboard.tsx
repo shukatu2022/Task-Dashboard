@@ -60,24 +60,32 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
       body.dueDate = dueDateValue;
     }
 
-    const res = await fetch("/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.location.href = "/";
+          return;
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
 
-    if (res.status === 401) {
-      window.location.href = "/";
-      return;
+      // DB に保存されたタスク（id が確定している）を取得
+      const newTask: Task = await res.json();
+
+      // 画面のタスク一覧に追加
+      setTasks([newTask, ...tasks]);
+      setInputValue("");
+      setDueDateValue(""); // 日付入力欄もクリア
+    } catch (error) {
+      console.error("タスク追加エラー:", error);
+    alert("タスクの追加に失敗しました。");
     }
-
-    // DB に保存されたタスク（id が確定している）を取得
-    const newTask: Task = await res.json();
-
-    // 画面のタスク一覧に追加
-    setTasks([newTask, ...tasks]);
-    setInputValue("");
-    setDueDateValue(""); // 日付入力欄もクリア
   };
 
   // -----------------------------------------------

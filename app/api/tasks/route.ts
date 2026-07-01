@@ -44,29 +44,37 @@ export async function GET() {
 // --------------------------
 export async function POST(req: Request) {
   // ① 認証チェック
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "ログインが必要です" }, { status: 401 });
+  try {
+      const session = await auth();
+      if (!session?.user?.id) {
+        return Response.json({ error: "ログインが必要です" }, { status: 401 });
+      }
+
+      // ② リクエストの中身を取得
+      const body = await req.json();
+
+      // ③ 入力値の検証
+      const result = taskSchema.safeParse(body);
+      if (!result.success) {
+        return Response.json({ error: result.error.issues }, { status: 400 });
+      }
+
+      // ④ DBに保存
+      const task = await prisma.task.create({
+        data: {
+          title: result.data.title,
+          userId: session.user.id,
+        },
+      });
+
+      return Response.json(task, { status: 201 });
+    } catch (error) {
+      console.error("POST /api/tasks error:", error);
+    return Response.json(
+      { error: "タスクの作成に失敗しました" },
+      { status: 500 }
+    );
   }
-
-  // ② リクエストの中身を取得
-  const body = await req.json();
-
-  // ③ 入力値の検証
-  const result = taskSchema.safeParse(body);
-  if (!result.success) {
-    return Response.json({ error: result.error.issues }, { status: 400 });
-  }
-
-  // ④ DBに保存
-  const task = await prisma.task.create({
-    data: {
-      title: result.data.title,
-      userId: session.user.id,
-    },
-  });
-
-  return Response.json(task, { status: 201 });
 }
 
 // --------------------------
@@ -117,3 +125,6 @@ export async function DELETE(req: Request) {
 
   return Response.json({ success: true });
 }
+
+// --------------------------
+// 
