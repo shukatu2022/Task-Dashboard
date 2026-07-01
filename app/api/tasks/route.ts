@@ -64,6 +64,7 @@ export async function POST(req: Request) {
         data: {
           title: result.data.title,
           userId: session.user.id,
+          dueDate: body.dueDate ? new Date(body.dueDate) : null, // 追加
         },
       });
 
@@ -125,6 +126,3 @@ export async function DELETE(req: Request) {
 
   return Response.json({ success: true });
 }
-
-// --------------------------
-// 

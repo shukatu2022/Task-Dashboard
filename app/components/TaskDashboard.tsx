@@ -59,6 +59,7 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
     if (dueDateValue.trim()) {
       body.dueDate = dueDateValue;
     }
+    console.log("送信する body:", body); // 追加
 
     try {
       const res = await fetch("/api/tasks", {
