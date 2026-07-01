@@ -78,4 +78,5 @@ model Task {
   // タスクを特定のユーザーに紐付ける
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dueDate     DateTime? // または String? でも可（ISO文字列で保存する場合）
 }

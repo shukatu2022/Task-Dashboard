@@ -11,6 +11,9 @@ interface Task {
   title: string;
   completed: boolean; // schema.prisma は completed（isCompleted ではない）
   createdAt: string;
+  dueDate?: string; // 追加：ISO文字列（例: "2026-07-10"）を想定
+                    // オプショナル（?）にしておくことで、
+                    // 既存タスクや日付未設定タスクにも対応できます 
 }
 
 export default function TaskDashboard({ user }: { user: User | undefined }) {
@@ -124,6 +127,21 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
     if (e.key === "Enter") addTask();
   };
 
+  // -----------------------------------------------
+  // 期限が近いかどうかを判定する関数
+  // -----------------------------------------------
+  const isDueSoon = (dueDateStr?: string): boolean => {
+    if (!dueDateStr) return false;
+
+    const dueDate = new Date(dueDateStr);
+    const today = new Date();
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // 3日以内なら「近い」と判定（閾値は調整可能）
+    return diffDays <= 3 && diffDays >= 0;
+  };
+
   return (
     <>
       {/* 1. ヘッダー（ユーザー情報とログアウトボタン） */}
@@ -185,33 +203,45 @@ export default function TaskDashboard({ user }: { user: User | undefined }) {
         <p className="text-center text-gray-400 py-8">タスクがありません</p>
       ) : (
         <div className="space-y-3">
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              className="flex items-center p-4 border rounded-lg bg-white shadow-sm"
-            >
-              <input
-                type="checkbox"
-                checked={task.completed}
-                onChange={() => toggleTask(task.id, task.completed)}
-                className="mr-4 h-5 w-5 cursor-pointer"
-              />
-              <span
-                className={`text-black ${
-                  task.completed ? "line-through text-gray-400" : ""
+          {tasks.map((task) => {
+            const dueSoon = isDueSoon(task.dueDate);
+            return (
+              <div
+                key={task.id}
+                className={`flex items-center p-4 border rounded-lg bg-white shadow-sm ${
+                  dueSoon ? "border-red-300 bg-red-50" : ""
                 }`}
               >
-                {task.title}
-              </span>
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => toggleTask(task.id, task.completed)}
+                  className="mr-4 h-5 w-5 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <span
+                    className={`text-black ${
+                      task.completed ? "line-through text-gray-400" : ""
+                    }`}
+                  >
+                    {task.title}
+                  </span>
+                  {task.dueDate && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      期限: {new Date(task.dueDate).toLocaleDateString("ja-JP")}
+                    </p>
+                  )}
+                </div>
 
-              <button
-                onClick={() => deleteTask(task.id)}
-                className="ml-auto px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition"
-              >
-                削除
-              </button>
-            </div>
-          ))}
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  className="ml-4 px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition"
+                >
+                  削除
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </>

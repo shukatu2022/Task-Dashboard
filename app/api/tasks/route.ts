@@ -25,6 +25,13 @@ export async function GET() {
   // ② 自分のタスクだけ取得
   const tasks = await prisma.task.findMany({
     where: { userId: session.user.id },
+    select: {
+    id: true,
+    title: true,
+    completed: true,
+    createdAt: true,
+    dueDate: true, // 追加
+    },
     orderBy: { createdAt: "desc" },
   });
 
